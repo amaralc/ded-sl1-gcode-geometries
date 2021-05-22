@@ -1,0 +1,66 @@
+;Author: Calil Amaral
+;Description: Create parallel weld beads with different power and welding speed parameters
+ 
+;General Configurations-----------------------------------
+
+N100 $AC_TIMER[1]=0 
+N101 G91			; Relative positioning
+N102 G64      ; Continuous path mode
+N103 M55			; Home mirror
+N104 G4F4		  ; Delay for mirror positioning
+N105 M0			  ; Wait for user input
+
+;R-Parameters-----------------------
+
+;R0                  ; Current P
+N106 R1 = 50         ; P- [Ẃ]
+N107 R2 = 50         ; P+ [W]
+
+;R10                 ; Current V
+N108 R11 = 625.00    ; V- [mm/min]
+N109 R12 = 1250.00   ; V+ [mm/min]
+N110 R13 = 3000      ; V (Laser Off) [mm/min]
+
+;R20                 ; Current Z
+N111 R21 = 47.5     ; Z- [mm]
+N112 R22 = 47.5      ; Z+ [mm]
+
+N113 R30 = 6         ; Spacing between beads [mm]
+N114 R31 = 15        ; Bead length [mm]
+N115 R32 = 5        ; Delay between beads [s]
+N116 R33 = 3         ; Gas stability delay [s]
+
+N117 R41 = 0.176326  ; Tan(10)
+N238 R42 = 0.984808  ; COS(10)
+
+;Process Start-up------------------------------------------
+
+N118 M56		          ; Set channel 1
+N119 G4F4		        ; Delay for mirror positioning
+N120 ;M78             ; Gas ON
+N121 ;M76             ; Crossjet ON
+N122 M0			        ; Wait for user input
+
+;LASER ON AND PATH--------------------------------------------
+
+; Run 1 (P-, V-, Z-)
+N123 R0=R1                                   ; Define power
+N124 R10=R11                                 ; Define speed
+N125 R20=R21                                 ; Define focal distance
+N126 ;H1=R0                                   ; Set power
+N127 G1 Z=+(R42*R20) X=(+R41*R20) F=R13             ; Set focal distance and adjust x position
+N128 ID=1 WHEN $AC_TIMER[1]>=0 DO M88        ; Turn laser on
+N129 G1 Y=(R31)  F=R10                       ; Create weld bead
+N130 ID=1 WHEN $AC_TIMER[1]>=0 DO M89        ; Turn laser off
+N131 G1 Y=-(R31) X=-(R41*R20) Z=-(R42*R20) F=R13        ; Move to next position
+N132 ;M79                                     ; Gas OFF
+N133 ;G4 F=R32                                ; Cooling time delay
+N134 ;M78                                     ; Gas ON
+N135 ;G4 F=R33                                ; Gas stability delay
+
+
+;End of Program--------------------------------------------
+N225 ;M77            ; Crossjet OFF
+N226 ;M79            ; Gas OFF
+N227 M55	          ; Home laser channel
+N228 M30		        ; End of program

@@ -1,0 +1,69 @@
+;Author:CALIL AMARAL
+;VERIFY BEAM PROFILE
+;V:2021.01.08
+ 
+;General Configurations-----------------------------------
+N100 $AC_TIMER[1]=0	;Start Timer
+N110 G91		;Relative Coordinates
+N120 G71		;Metric System
+N130 G64		;
+N140 M55		;Home Laser Channel
+N150 G4F4	   ;Necessary delay for positioning of the mirror
+N270 M0	     ;Wait for user-input
+
+;R-Parameters----------------------------------------------
+N170 R0=39             	;Laser Power
+N180 R1=0              	;Feed Rate PROCESS ON
+N190 R2=1000               ;Feed Rate PROCESS OFF
+N200 R3=0          		;Powder Flow
+N210 R4=0          		;X-AXIS
+
+;Process Start-up------------------------------------------
+N240 M56		           ;set channel 1 as laser-source 
+N250 G4F4		          ;necessary delay for positioning of the mirror
+N260 M76            	   ;CROSSJET ON
+N270 M0	   	  	   ;wait for user-input
+ 
+;Laser On and Path-----------------------------------------
+
+N400 G54
+N401 G90
+N401 G1 X-70 Y0 Z-35 F=R2
+N402 G4 F1
+N403 
+N404 ;G1 X0 Y0 Z0 F=R2
+N330 H1=R0
+N331 G91
+N332 ;G1 Z0.5 F1000
+N333 ;G1 Z35 F1000
+N332 R99=0
+N332 WHILE(R99<15)
+N333 
+N334 M0
+N334 G4 F0.5
+N340 ID=1 WHEN $AC_TIMER[1]>=0 DO M88 
+N300 G4 F0.2
+N340 ID=1 WHEN $AC_TIMER[1]>=0 DO M89
+N341 G4 F0.5
+N342 G1 X10 Z5
+N343 
+N414 
+N415 R99=R99+1
+N415 ENDWHILE
+N424  
+N434 G54
+N444 G90
+N454 X0 Y0 Z0
+
+;N330 M65		;CARRIER OFF
+;N340 M63		;POWDER MIXER OFF
+;N350 M67		;POWDER FEED OFF
+ 
+;End of Program--------------------------------------------
+N360 G4 F2
+N320 M77       ;CROSSJET OFF
+;N370 M79        ;GAS 1 OFF
+N380 M55		;home laser ressonator
+N381 G4 F2
+N390 M30		;program end
+

@@ -1,0 +1,103 @@
+;Author: Calil Amaral
+;Description: Template program based on Adriano's laser shot program
+;V:2020.01.28
+
+CALL "GENERAL_CONFIG.SPF"
+CALL "R_PARAMETERS.SPF"
+CALL "PROCESS_STARTUP.SPF"
+CALL "LASER_ON_AND_PATH.SPF"
+CALL "END_OFF_PROGRAM.SPF"
+
+;Process Start-up------------------------------------------
+N270 M56		            ; SET CHANNEL 1 AS LASER SOURCE
+N280 G4F4		            ; DELAY 4 SECONDS TO POSITION THE MIRROR
+N290
+;M76            	      ; CROSSJET ON
+N300 M0	   	  	        ; WAIT FOR USER INPUT
+ 
+;Laser On and Path-----------------------------------------
+
+N310 G54
+N320 G90
+N330 G1 X0 Y0 Z0 F=R2
+
+N340 
+N344 
+N350 G1 Y18 F=R1
+N351 
+N352 
+N353 ;G91
+N354 ;G1 Y-1.44 F=R1
+N354 ;G1 Z70 F=R2
+N355 
+N353 ;WHILE(R96<R97)
+N354  ;ID=1 WHEN $AC_TIMER[1]>=0 DO M50  
+N355  ;G2 X0 Y0 I0 J-16.56 F=600
+N357  ;ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+N356  ;R96=R96+1
+N358 
+N354 ;ENDWHILE
+N353 
+N354 ;G1 Y1.44 Z-70 F=R2
+N355 
+N356 ;M0
+N357 
+N360 WHILE(R4<R5)
+N361 
+N362 IF(R4==0)
+N363    H1=R0*R13
+N364    R15=R1
+N364 ELSE
+N365    H1=R0
+N366    R15=R1*R14
+N366 ENDIF
+N370 
+N380 M78           	  ; GAS 1 ON
+N390 M64		            ; CARRIER ON
+N400 H2=R3	            ; SET POWDER FLOW
+N410 M62		            ; POWDER MIXER ON
+N420 M66		            ; POWDER FEED ON
+N430 G4 F10	            ; DELAY FOR POWDER STABILIZATION
+N440 
+N441        G91 
+N460        ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+N461        G2 X0 Y=(-2*R12) I0 J=(-R12) F=R15
+N471        ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+N472        G1 Y=R11
+N473        ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+N474        G2 X0 Y=0 I0 J=(R12-R11) F=R15
+N474        ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+N474        G1 Y=-R11
+N475        ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+N461        G2 X0 Y=(2*R12) I0 J=(R12) F=R15
+N471        ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+N475        
+N473        
+N472 
+N491 
+N492 
+N500 M65		            ; CARRIER OFF
+N510 M63		            ; POWDER MIXER OFF
+N520 M67		            ; POWDER FEED OFF
+N540 M79                 ; GAS 1 OFF
+N550 
+N560  
+N570 G1 X=-R7  Z=R6 F1000
+N580 
+N590 M0
+N600  
+N610  R4 = R4 + 1
+N620  
+N630 ENDWHILE
+
+N640  
+
+;End of Program--------------------------------------------
+N650 M65		            ; CARRIER OFF
+N660 M63		            ; POWDER MIXER OFF
+N670 M67		            ; POWDER FEED OFF
+;M77                ; CROSSJET OFF
+N680 M55		              ; HOME LASER RESSONATOR
+N690 G4 F3               ; DELAY
+N700 M79                 ; GAS 1 OFF
+N710 M30		              ; PROGRAM END

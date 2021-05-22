@@ -1,0 +1,172 @@
+;Author: Calil Amaral
+;Description: Template program based on Adriano's laser shot program
+;V:2020.01.28
+ 
+;General Configurations-----------------------------------
+N100 $AC_TIMER[1]=0	  ; START TIMER
+N110 G91		            ; RELATIVE COORDINATES
+N120 G71		            ; METRIC SYSTEM
+N130 G64		            ; CONTINUOUS PATH MODE
+N140 M55		            ; MOVE LASER MIRROR TO HOME
+N150 G4F4		          ; DELAY 4 SECONDS
+N160 M0	   	          ; WAIT FOR USER INPUT
+
+;R-Parameters----------------------------------------------
+N170 R0=39             ; LASER POWER
+N180 R1=300            ; FEED RATE PROCESS ON [mm/min]
+N190 R2=1000           ; FEED RATE PROCESS OFF [mm/min]
+N200 R3=3          	  ;  [RPM]
+N210 R4=0              ; COUNTER START
+N220 R5=64              ; NUMBER OF LAYERS
+N230 R6=1.44           ; DELTA Z
+N240 
+
+N250 R8=0.1763;       TAN THETA
+N260 R7=R6*R8       ; DELTA X
+N270 R9=2.88        ; DELTA R 
+N280     R10=18          ; RADIUS    
+N290     R94=1          ;BETWEEN LAYER DIRECTION INDEX
+N300     R95=1          ;IN LAYER ORDER MULTIPLIER
+N310 R96=0          ;PRE-HEATING LAP COUTER
+N320 R97=2          ;PRE-HEATING NUMBER OF LAPS
+N330 R98=0          ;WALL COUNTER
+N340 R99=2          ;N OF WALLS
+
+;Process Start-up------------------------------------------
+N350 M56		            ; SET CHANNEL 1 AS LASER SOURCE
+N360 G4F4		          ; DELAY 4 SECONDS TO POSITION THE MIRROR
+N370
+;M76            	  ; CROSSJET ON
+N380 M0	   	  	      ; WAIT FOR USER INPUT
+ 
+;Laser On and Path-----------------------------------------
+
+N390 G54
+N400 G90
+N410 G1 X0 Y0 Z0 F=R2
+
+N420 H1=R0
+N430 
+N440 
+N450 
+N460 
+N470 ;G91
+N480 ;G1 Y-1.44 F=R1
+N490 ;G1 Z70 F=R2
+N500 
+N510 ;WHILE(R96<R97)
+N520 
+N530  ;ID=1 WHEN $AC_TIMER[1]>=0 DO M50  
+N540  ;G2 X0 Y0 I0 J-16.56 F=600
+N550  ;ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+N560  ;R96=R96+1
+N570 
+N580 ;ENDWHILE
+N590 
+N600 ;G1 Y1.44 Z-70 F=R2
+N610 
+N620 ;M0
+N630 G91
+N640 G1 Y=R10 F=R1 ; GO TO TOP
+N650 WHILE(R4<R5)
+N660 
+N670 M78           	  ; GAS 1 ON
+N680 M64		            ; CARRIER ON
+N690 H2=R3	            ; SET POWDER FLOW
+N700 M62		            ; POWDER MIXER ON
+N710 M66		            ; POWDER FEED ON
+N720 G4 F10	            ; DELAY FOR POWDER STABILIZATION
+N730 
+N740        
+
+N750              IF(R94==1) ; BETWEEN LAYERS CLOCKWISE
+N760                  IF(R95==1)        ; IN LAYER INNER WALL FIRST
+N770                      
+N780                      G1 Y=-R9      ; - DELTA R
+N790                      ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+N800                      G2 X0 Y0 I0 J=-(R10-R9) F=R1
+N810                      ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+N820                      G1 Y=R9
+N830                      ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+N840                      G2 X0 Y0 I0 J=-R10 F=R1
+N850                      ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+
+N860                      R95 = R95 * (-1)
+                  
+N870                  ELSE              ; IN LAYER OUTER WALL FIRST
+N880                      ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+N890                      G2 X0 Y0 I0 J=-(R10) F=R1
+N900                      ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+N910                      G1 Y=-R9
+N920                      ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+N930                      G2 X0 Y0 I0 J=-(R10-R9) F=R1
+N940                      ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+N950                      G1 Y=R9                  
+
+N960                      R95 = R95 * (-1)
+N970                  ENDIF
+
+N980                  R94 = R94 * (-1)
+N990              ELSE       ; BETWEEN LAYER COUNTER-CLOCKWISE
+N1000                  IF(R95==1)        ; IN LAYER INNER WALL FIRST
+N1010                      
+N1020                      G1 Y=-R9      ; - DELTA R
+N1030                      ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+N1040                      G3 X0 Y0 I0 J=-(R10-R9) F=R1
+N1050                      ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+N1060                      G1 Y=R9
+N1070                      ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+N1080                      G3 X0 Y0 I0 J=-R10 F=R1
+N1090                      ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+
+N1100                      R95 = R95 * (-1)
+                  
+N1110                  ELSE              ; IN LAYER OUTER WALL FIRST
+N1120                                            
+N1130                      ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+N1140                      G3 X0 Y0 I0 J=-(R10) F=R1
+N1150                      ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+N1160                      G1 Y=-R9
+N1170                      ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+N1180                      G3 X0 Y0 I0 J=-(R10-R9) F=R1
+N1190                      ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+N1200                      G1 Y=R9                  
+
+N1210                      R95 = R95 * (-1)
+N1220                  ENDIF
+
+
+N1230                  R94 = R94 * (-1)
+N1240              ENDIF
+  N1250        
+   
+N1260        
+N1270        
+N1280 
+N1290 
+N1300 
+N1310 M65		            ; CARRIER OFF
+N1320 M63		            ; POWDER MIXER OFF
+N1330 M67		            ; POWDER FEED OFF
+N1340 M79                 ; GAS 1 OFF
+N1350 
+N1360  
+N1370 G1 X=-R7  Z=R6 F1000
+N1380 
+N1390 M0
+N1400  
+N1410  R4 = R4 + 1
+N1420  
+N1430 ENDWHILE
+
+N1440  
+
+;End of Program--------------------------------------------
+N1450 M65		            ; CARRIER OFF
+N1460 M63		            ; POWDER MIXER OFF
+N1470 M67		            ; POWDER FEED OFF
+;M77                ; CROSSJET OFF
+N1480 M55		              ; HOME LASER RESSONATOR
+N1490 G4 F3               ; DELAY
+N1500 M79                 ; GAS 1 OFF
+N1510 M30		              ; PROGRAM END
