@@ -1,6 +1,6 @@
 ;Author: Calil Amaral
 ;Description: General configurations
-;V:2021.05.22
+;V:2021.05.21
 
 ;General Configurations-----------------------------------
 N100 $AC_TIMER[1]=0	    ; START TIMER
