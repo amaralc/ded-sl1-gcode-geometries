@@ -1,103 +1,146 @@
 ;Author: Calil Amaral
 ;Description: Template program based on Adriano's laser shot program
-;V:2020.01.28
+;V:2020.05.21
 
-CALL "GENERAL_CONFIG.SPF"
-CALL "R_PARAMETERS.SPF"
-CALL "PROCESS_STARTUP.SPF"
-CALL "LASER_ON_AND_PATH.SPF"
-CALL "END_OFF_PROGRAM.SPF"
+;General Configurations-----------------------------------
+$AC_TIMER[1]=0	    ; START TIMER
+G91		              ; RELATIVE COORDINATES
+G71		              ; METRIC SYSTEM
+G64		              ; CONTINUOUS PATH MODE
+M55		              ; MOVE LASER MIRROR TO HOME
+G4F4		            ; DELAY 4 SECONDS
+M0	   	            ; WAIT FOR USER INPUT
+
+;R-Parameters----------------------------------------------
+;--Input process parameters
+R00=39              ; LASER POWER
+R01=300             ; FEED RATE PROCESS ON [mm/min]
+R02=1000            ; FEED RATE PROCESS OFF [mm/min]
+R03=3               ; [RPM]
+R04=0               ; LAYER COUNTER START
+R13=1.25            ; FIRST LAYER POWER FACTOR
+R62=1               ; 1+N LAYER POWER FACTOR
+R14=1               ; 1+N LAYER SPEED FACTOR
+R96=0               ; PRE-HEATING LAP COUTER
+R97=2               ; PRE-HEATING NUMBER OF LAPS
+
+;--Bead geometry parameters
+R06=1.44            ; SINGLE BEAD HEIGHT
+R09=3.2             ; SINGLE BEAD THICKNESS
+R10=0.1             ; OVERLAP [%]
+R11=R09*(1-R10)     ; EFFECTIVE BEAD THICKNESS
+
+;--Part geometry parameters
+R83=20              ; OUTER WALL EXTERNAL RADIUS
+R12=R83-(R09/2)     ; OUTER WALL MEAN RADIUS
+R84=60              ; OUTER WALL EXTERNAL MAXIMUM DIMENSION (Y)
+R05=64              ; TOTAL NUMBER OF LAYERS
+R70=7.5             ; DRAFT ANGLE IN SLOT TRANSVERSAL DIRECTION (X)
+R81=R06*TAN(R70)    ; DELTA X
+R80=7.5             ; DRAFT ANGLE IN SLOT LONGITUDINAL DIRECTION (Y)
+R82=R06*TAN(R80)    ; DELTA Y
+R98=0               ; WALL COUNTER
+R99=2               ; N OF WALLS
+R79=R84-2*R83       ; LINEAR PATH LENGTH
+R85=-1              ; DEPOSITION SEQUENCE RELATIVE TO CURVATURE VECTOR (CONVEX -> CONCAVE: -1)
 
 ;Process Start-up------------------------------------------
-N270 M56		            ; SET CHANNEL 1 AS LASER SOURCE
-N280 G4F4		            ; DELAY 4 SECONDS TO POSITION THE MIRROR
-N290
-;M76            	      ; CROSSJET ON
-N300 M0	   	  	        ; WAIT FOR USER INPUT
+M56		              ; SET CHANNEL 1 AS LASER SOURCE
+G4F4		            ; DELAY 4 SECONDS TO POSITION THE MIRROR
+;M76            	  ; CROSSJET ON
+M0	   	  	        ; WAIT FOR USER INPUT
  
 ;Laser On and Path-----------------------------------------
+G54                 ; SET ORIGIN
+G90                 ; SET ABSOLUTE COORDINATES RELATIVE TO ORIGIN
+G1 X0 Y0 Z0 F=R02   ; MOVE TO ORIGIN
+G1 Y18 F=R02        ; MOVE TO BEAD START POSITION
 
-N310 G54
-N320 G90
-N330 G1 X0 Y0 Z0 F=R2
+;WHILE LAYER COUNTER < NUMBER OF LAYERS (STARTS FROM 0)
+WHILE(R04<R05)
 
-N340 
-N344 
-N350 G1 Y18 F=R1
-N351 
-N352 
-N353 ;G91
-N354 ;G1 Y-1.44 F=R1
-N354 ;G1 Z70 F=R2
-N355 
-N353 ;WHILE(R96<R97)
-N354  ;ID=1 WHEN $AC_TIMER[1]>=0 DO M50  
-N355  ;G2 X0 Y0 I0 J-16.56 F=600
-N357  ;ID=1 WHEN $AC_TIMER[1]>=0 DO M51
-N356  ;R96=R96+1
-N358 
-N354 ;ENDWHILE
-N353 
-N354 ;G1 Y1.44 Z-70 F=R2
-N355 
-N356 ;M0
-N357 
-N360 WHILE(R4<R5)
-N361 
-N362 IF(R4==0)
-N363    H1=R0*R13
-N364    R15=R1
-N364 ELSE
-N365    H1=R0
-N366    R15=R1*R14
-N366 ENDIF
-N370 
-N380 M78           	  ; GAS 1 ON
-N390 M64		            ; CARRIER ON
-N400 H2=R3	            ; SET POWDER FLOW
-N410 M62		            ; POWDER MIXER ON
-N420 M66		            ; POWDER FEED ON
-N430 G4 F10	            ; DELAY FOR POWDER STABILIZATION
-N440 
-N441        G91 
-N460        ID=1 WHEN $AC_TIMER[1]>=0 DO M50
-N461        G2 X0 Y=(-2*R12) I0 J=(-R12) F=R15
-N471        ID=1 WHEN $AC_TIMER[1]>=0 DO M51
-N472        G1 Y=R11
-N473        ID=1 WHEN $AC_TIMER[1]>=0 DO M50
-N474        G2 X0 Y=0 I0 J=(R12-R11) F=R15
-N474        ID=1 WHEN $AC_TIMER[1]>=0 DO M51
-N474        G1 Y=-R11
-N475        ID=1 WHEN $AC_TIMER[1]>=0 DO M50
-N461        G2 X0 Y=(2*R12) I0 J=(R12) F=R15
-N471        ID=1 WHEN $AC_TIMER[1]>=0 DO M51
-N475        
-N473        
-N472 
-N491 
-N492 
-N500 M65		            ; CARRIER OFF
-N510 M63		            ; POWDER MIXER OFF
-N520 M67		            ; POWDER FEED OFF
-N540 M79                 ; GAS 1 OFF
-N550 
-N560  
-N570 G1 X=-R7  Z=R6 F1000
-N580 
-N590 M0
-N600  
-N610  R4 = R4 + 1
-N620  
-N630 ENDWHILE
+  ;APPLY FIRST LAYER POWER FACTOR
+  IF(R04==0)
+    H1=R00*R13    ;SET POWER PERCENTAGE WITH APPLIED FACTOR
+    R15=R01       ;SET LAYER 0 BASE EFFECTIVE SPEED
+  ELSE   
+    H1=R00*R62    ;SET POWER PERCENTAGE WITH APPLIED FACTOR
+    R15=R01*R14   ;SET N-TH LAYER EFFECTIVE SPEED WITH APPLIED FACTOR
+    M78           ;GAS 1 ON               
+    M64           ;CARRIER ON   	            
+    H2=R03        ;SET POWDER FLOW            
+    M62           ;POWDER MIXER ON             
+    M66           ;POWDER FEED ON    
+    G4 F10        ;DELAY FOR POWDER STABILIZATION   
+  ENDIF
 
-N640  
+   G91           ;SET RELATIVE COORDINATES    
+
+  ;SET FIRST LAP RADIUS
+  IF(R85==-1)       ;FROM OUTSIDE TO INSIDE
+    R86=R12         ;CURRENT WALL MEAN RADIUS (OUTER WALL MEAN RADIUS)
+  ELSE
+    R86=R12-R99*R11 ;SET CURRENT WALL MEAN RADIUS (INNER WALL MEAN RADIUS)
+  ENDIF
+
+  R98=0
+  WHILE(R98<R99)
+    ;DEPOSIT BEAD IN LINEAR PATH A-B
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+    G1 X=(0) Y=(+R79/2) F=R15
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+
+    ;DEPOSIT BEAD IN CLOCK-WISE SEMI-CIRCULAR PATH B-C
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+    G2 X=(2*R86) Y=(0) I=(R86) J=(0) F=R15
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+
+    ;DEPOSIT BEAD IN LINEAR PATH C-D
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+    G1 X=(0) Y=(-R79) F=R15
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+
+    ;DEPOSIT BEAD IN CLOCK-WISE SEMI-CIRCULAR PATH D-E
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+    G2 X=(-2*R86) Y=(0) I=(-R86) J=(0) F=R15
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+    
+    ;DEPOSIT BEAD IN LINEAR PATH E-A
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+    G1 X=(0) Y=(+R79/2) F=R15
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+
+    ;INCREMENT COUNTER
+    R98=R98+1
+
+    IF(R98<R99)
+      ;MOVE TO NEXT WALL
+      G1 X=(-R85*R11)      ; MOVE TO OUTSIDE OR INSIDE DEPENDING ON THE DIRECTION FACTOR
+      R86=R86+(R85*R11);  ; CHANGE WALL MEAN READIUS
+    ENDIF
+
+  ENDWHILE
+  
+  G1 X=(R85*R11*(R99-1))             ;RETURN TO FIRST WALL POSITION
+  G1 X=R81 Y=R82 Z=R06 F1000      ;MOVE IN DRAFT DIRECTION  
+
+  M65		            ; CARRIER OFF
+  M63		            ; POWDER MIXER OFF
+  M67		            ; POWDER FEED OFF
+  M79               ; GAS 1 OFF  
+  
+  M0                ; WAIT FOR USER INPUT
+  R04 = R04 + 1     ; ITERATE LAYER COUNTER
+  
+ENDWHILE
 
 ;End of Program--------------------------------------------
-N650 M65		            ; CARRIER OFF
-N660 M63		            ; POWDER MIXER OFF
-N670 M67		            ; POWDER FEED OFF
+M65		              ; CARRIER OFF
+M63		              ; POWDER MIXER OFF
+M67		              ; POWDER FEED OFF
 ;M77                ; CROSSJET OFF
-N680 M55		              ; HOME LASER RESSONATOR
-N690 G4 F3               ; DELAY
-N700 M79                 ; GAS 1 OFF
-N710 M30		              ; PROGRAM END
+M55		              ; HOME LASER RESSONATOR
+G4 F3               ; DELAY
+M79                 ; GAS 1 OFF
+M30		              ; PROGRAM END
+
