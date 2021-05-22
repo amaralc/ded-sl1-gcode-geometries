@@ -1,9 +1,0 @@
-;Author: Calil Amaral
-;Description: Process Start-up
-;V:2021.05.21
-
-;Process Start-up------------------------------------------
-M56		              ; SET CHANNEL 1 AS LASER SOURCE
-G4F4		            ; DELAY 4 SECONDS TO POSITION THE MIRROR
-;M76            	  ; CROSSJET ON
-M0	   	  	        ; WAIT FOR USER INPUT
