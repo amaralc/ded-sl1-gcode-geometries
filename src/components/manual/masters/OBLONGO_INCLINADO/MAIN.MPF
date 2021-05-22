@@ -1,103 +1,82 @@
 ;Author: Calil Amaral
 ;Description: Template program based on Adriano's laser shot program
-;V:2020.01.28
+;V:2020.05.21
 
+;Call subprogram files (must be in subprograms folder) ----
 CALL "GENERAL_CONFIG.SPF"
-CALL "R_PARAMETERS.SPF"
 CALL "PROCESS_STARTUP.SPF"
-CALL "LASER_ON_AND_PATH.SPF"
-CALL "END_OFF_PROGRAM.SPF"
 
-;Process Start-up------------------------------------------
-N270 M56		            ; SET CHANNEL 1 AS LASER SOURCE
-N280 G4F4		            ; DELAY 4 SECONDS TO POSITION THE MIRROR
-N290
-;M76            	      ; CROSSJET ON
-N300 M0	   	  	        ; WAIT FOR USER INPUT
+;R-Parameters----------------------------------------------
+R0=39              ; LASER POWER
+R1=300             ; FEED RATE PROCESS ON [mm/min]
+R2=1000            ; FEED RATE PROCESS OFF [mm/min]
+N20 R3=3           ; [RPM]
+R4=0               ; COUNTER START
+R5=64              ; NUMBER OF LAYERS
+R6=1.44            ; DELTA Z
+
+R8=0.1763          ; TAN THETA
+R7=R6*R8           ; DELTA X
+R9=3.2             ; BEAD THICKNESS
+R10=0.1            ; OVERLAP [%]
+R11=R9*(1-R10)     ; EFFECTIVE BEAD THICKNESS
+R12=18             ; OUTER WALL MEAN RADIUS
+
+R13=1.25           ; FIRST LAYER POWER FACTOR
+R14=1.25           ; 1+N LAYER SPEED FACTOR
+R15=R1             ; EFFECTIVE SPEED
+R96=0              ; PRE-HEATING LAP COUTER
+R97=2              ; PRE-HEATING NUMBER OF LAPS
+R98=0              ; WALL COUNTER
+R99=2              ; N OF WALLS
  
 ;Laser On and Path-----------------------------------------
+G54                 ; SET ORIGIN
+G90                 ; SET ABSOLUTE COORDINATES RELATIVE TO ORIGIN
+G1 X0 Y0 Z0 F=R2    ; MOVE TO ORIGIN
+G1 Y18 F=R1         ; MOVE TO BEAD START POSITION
 
-N310 G54
-N320 G90
-N330 G1 X0 Y0 Z0 F=R2
+WHILE(R4<R5)
 
-N340 
-N344 
-N350 G1 Y18 F=R1
-N351 
-N352 
-N353 ;G91
-N354 ;G1 Y-1.44 F=R1
-N354 ;G1 Z70 F=R2
-N355 
-N353 ;WHILE(R96<R97)
-N354  ;ID=1 WHEN $AC_TIMER[1]>=0 DO M50  
-N355  ;G2 X0 Y0 I0 J-16.56 F=600
-N357  ;ID=1 WHEN $AC_TIMER[1]>=0 DO M51
-N356  ;R96=R96+1
-N358 
-N354 ;ENDWHILE
-N353 
-N354 ;G1 Y1.44 Z-70 F=R2
-N355 
-N356 ;M0
-N357 
-N360 WHILE(R4<R5)
-N361 
-N362 IF(R4==0)
-N363    H1=R0*R13
-N364    R15=R1
-N364 ELSE
-N365    H1=R0
-N366    R15=R1*R14
-N366 ENDIF
-N370 
-N380 M78           	  ; GAS 1 ON
-N390 M64		            ; CARRIER ON
-N400 H2=R3	            ; SET POWDER FLOW
-N410 M62		            ; POWDER MIXER ON
-N420 M66		            ; POWDER FEED ON
-N430 G4 F10	            ; DELAY FOR POWDER STABILIZATION
-N440 
-N441        G91 
-N460        ID=1 WHEN $AC_TIMER[1]>=0 DO M50
-N461        G2 X0 Y=(-2*R12) I0 J=(-R12) F=R15
-N471        ID=1 WHEN $AC_TIMER[1]>=0 DO M51
-N472        G1 Y=R11
-N473        ID=1 WHEN $AC_TIMER[1]>=0 DO M50
-N474        G2 X0 Y=0 I0 J=(R12-R11) F=R15
-N474        ID=1 WHEN $AC_TIMER[1]>=0 DO M51
-N474        G1 Y=-R11
-N475        ID=1 WHEN $AC_TIMER[1]>=0 DO M50
-N461        G2 X0 Y=(2*R12) I0 J=(R12) F=R15
-N471        ID=1 WHEN $AC_TIMER[1]>=0 DO M51
-N475        
-N473        
-N472 
-N491 
-N492 
-N500 M65		            ; CARRIER OFF
-N510 M63		            ; POWDER MIXER OFF
-N520 M67		            ; POWDER FEED OFF
-N540 M79                 ; GAS 1 OFF
-N550 
-N560  
-N570 G1 X=-R7  Z=R6 F1000
-N580 
-N590 M0
-N600  
-N610  R4 = R4 + 1
-N620  
-N630 ENDWHILE
+  IF(R4==0)
+    H1=R0*R13
+    R15=R1
+  ELSE
+    H1=R0
+    R15=R1*R14
+  ENDIF
 
-N640  
+  M78           	  ; GAS 1 ON
+  M64		            ; CARRIER ON
+  H2=R3	            ; SET POWDER FLOW
+  M62		            ; POWDER MIXER ON
+  M66		            ; POWDER FEED ON
+  G4 F10	          ; DELAY FOR POWDER STABILIZATION
 
-;End of Program--------------------------------------------
-N650 M65		            ; CARRIER OFF
-N660 M63		            ; POWDER MIXER OFF
-N670 M67		            ; POWDER FEED OFF
-;M77                ; CROSSJET OFF
-N680 M55		              ; HOME LASER RESSONATOR
-N690 G4 F3               ; DELAY
-N700 M79                 ; GAS 1 OFF
-N710 M30		              ; PROGRAM END
+  G91 
+  ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+  G2 X0 Y=(-2*R12) I0 J=(-R12) F=R15
+  ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+  G1 Y=R11
+  ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+  G2 X0 Y=0 I0 J=(R12-R11) F=R15
+  ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+  G1 Y=-R11
+  ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+  G2 X0 Y=(2*R12) I0 J=(R12) F=R15
+  ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+
+  M65		            ; CARRIER OFF
+  M63		            ; POWDER MIXER OFF
+  M67		            ; POWDER FEED OFF
+  M79               ; GAS 1 OFF
+  
+  G1 X=-R7  Z=R6 F1000
+  M0  
+  R4 = R4 + 1
+  
+ENDWHILE
+
+
+;Call subprogram files (must be in subprograms folder) ----
+CALL "END_OFF_PROGRAM.SPF"
