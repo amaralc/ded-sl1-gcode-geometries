@@ -2,145 +2,195 @@
 ;Description: Template program based on Adriano's laser shot program
 ;V:2020.05.21
 
-;General Configurations-----------------------------------
-$AC_TIMER[1]=0	    ; START TIMER
-G91		              ; RELATIVE COORDINATES
-G71		              ; METRIC SYSTEM
-G64		              ; CONTINUOUS PATH MODE
-M55		              ; MOVE LASER MIRROR TO HOME
-G4F4		            ; DELAY 4 SECONDS
-M0	   	            ; WAIT FOR USER INPUT
+;GENERAL CONFIGURATIONS -----------------------------------
+$AC_TIMER[1]=0	    ; Start timer
+G91		              ; Set relative coordinates
+G71		              ; Set metric system
+G64		              ; Set continuous path mode
+M55		              ; Move laser mirror to home
+G4F4		            ; Wait for 4 seconds
+M0	   	            ; Wait for user input
 
-;R-Parameters----------------------------------------------
+;R-PARAMETERS ----------------------------------------------
 ;--Input process parameters
-R00=39              ; LASER POWER
-R01=300             ; FEED RATE PROCESS ON [mm/min]
-R02=1000            ; FEED RATE PROCESS OFF [mm/min]
-R03=3               ; [RPM]
-R04=0               ; LAYER COUNTER START
-R13=1.25            ; FIRST LAYER POWER FACTOR
-R62=1               ; 1+N LAYER POWER FACTOR
-R14=1               ; 1+N LAYER SPEED FACTOR
-R96=0               ; PRE-HEATING LAP COUTER
-R97=2               ; PRE-HEATING NUMBER OF LAPS
+R00=39              ; Laser power [%] - Relative to available power set by choice of active modules)
+R01=300             ; Deposition speed process ON [mm/min]
+R02=1000            ; Deposition speed process OFF [mm/min]
+R03=3               ; Powder feed disc rotational speed [RPM] - RPM is linearly related to powder feed rate in g/min
+R04=0               ; Layer counter
+R13=1.25            ; First layer power factor
+R16=1.25            ; Pre-heating power factor
+R17=1               ; Pre-heating speed factor
+R62=1               ; 1+N layer power factor
+R14=1               ; 1+N layer speed factor
+R96=0               ; Pre-heating cycles counter
+R97=2               ; Number of pre-heating cycles
+R92=1               ; Is pre-heating cycle (0 = false, 1 = true)
 
 ;--Bead geometry parameters
-R06=1.44            ; SINGLE BEAD HEIGHT
-R09=3.2             ; SINGLE BEAD THICKNESS
-R10=0.1             ; OVERLAP [%]
-R11=R09*(1-R10)     ; EFFECTIVE BEAD THICKNESS
+R06=1.44            ; Single bead height [mm]
+R09=3.2             ; Single bead thickness [mm]
+R10=0.1             ; Bead overlap [%]
+R11=R09*(1-R10)     ; Effective bead thickness
+
+;--Reference bead parameters
+R95=3               ; X Coordinate from start point of reference bead relative to reference coordinate system
+R94=3               ; Y Coordinate from start point of reference bead relative to reference coordinate system
+R93=40              ; Reference bead length
 
 ;--Part geometry parameters
-R83=20              ; OUTER WALL EXTERNAL RADIUS
-R12=R83-(R09/2)     ; OUTER WALL MEAN RADIUS
-R84=60              ; OUTER WALL EXTERNAL MAXIMUM DIMENSION (Y)
-R05=64              ; TOTAL NUMBER OF LAYERS
-R70=7.5             ; DRAFT ANGLE IN SLOT TRANSVERSAL DIRECTION (X)
-R81=R06*TAN(R70)    ; DELTA X
-R80=7.5             ; DRAFT ANGLE IN SLOT LONGITUDINAL DIRECTION (Y)
-R82=R06*TAN(R80)    ; DELTA Y
-R98=0               ; WALL COUNTER
-R99=2               ; N OF WALLS
-R79=R84-2*R83       ; LINEAR PATH LENGTH
-R85=-1              ; DEPOSITION SEQUENCE RELATIVE TO CURVATURE VECTOR (CONVEX -> CONCAVE: -1)
+R83=20              ; Outer wall external radius [mm]
+R12=R83-(R09/2)     ; Outer wall mean radius [mm]
+R84=60              ; Slot longitudinal maximum dimension (Y) [mm]
+R05=64              ; Total number of layers [-]
+R70=7.5             ; Draft angle in slot transversal direction (X) [deg]
+R81=R06*TAN(R70)    ; Delta X between layers [mm]
+R80=7.5             ; Draft angle in slot longitudinal direction (Y) [deg]
+R82=R06*TAN(R80)    ; Delta Y between layers [mm]
+R98=0               ; Lines per wall counter [-]
+R99=2               ; Total lines per wall [-]
+R79=R84-2*R83       ; Slot center distance [mm]
+R85=-1              ; Deposition sequence relative to curvature vector (from inside to outside: +1)
+R89=R95             ; X Coordinate from start point of reference bead relative to reference coordinate system
+R88=((10+R84)/2)    ; Y Coordinate from start point of reference bead relative to reference coordinate system
 
-;Process Start-up------------------------------------------
-M56		              ; SET CHANNEL 1 AS LASER SOURCE
-G4F4		            ; DELAY 4 SECONDS TO POSITION THE MIRROR
-;M76            	  ; CROSSJET ON
-M0	   	  	        ; WAIT FOR USER INPUT
+;PROCESS START-UP ------------------------------------------
+M56		              ; Set channel 1 as laser source
+G4F4		            ; Wait for 4 seconds to position the mirror
+;M76            	  ; Crossjet ON
+M0	   	  	        ; Wait for user input
  
-;Laser On and Path-----------------------------------------
-G54                 ; SET ORIGIN
-G90                 ; SET ABSOLUTE COORDINATES RELATIVE TO ORIGIN
-G1 X0 Y0 Z0 F=R02   ; MOVE TO ORIGIN
-G1 Y18 F=R02        ; MOVE TO BEAD START POSITION
+;LASER ON AND PATH -----------------------------------------
+;--Move to origin
+G54                             ; Set workpiece offset (local coordinate system origin, LCSO)
+G90                             ; Set absolute coordinates relative to LCSO
+G1 X0 Y0 Z0 F=R02               ; Move to LCSO
 
-;WHILE LAYER COUNTER < NUMBER OF LAYERS (STARTS FROM 0)
+;While layer counter < Number of Layers
 WHILE(R04<R05)
 
-  ;APPLY FIRST LAYER POWER FACTOR
+  ;Apply first layer power and speed factors
   IF(R04==0)
-    H1=R00*R13    ;SET POWER PERCENTAGE WITH APPLIED FACTOR
-    R15=R01       ;SET LAYER 0 BASE EFFECTIVE SPEED
-  ELSE   
-    H1=R00*R62    ;SET POWER PERCENTAGE WITH APPLIED FACTOR
-    R15=R01*R14   ;SET N-TH LAYER EFFECTIVE SPEED WITH APPLIED FACTOR
-    M78           ;GAS 1 ON               
-    M64           ;CARRIER ON   	            
-    H2=R03        ;SET POWDER FLOW            
-    M62           ;POWDER MIXER ON             
-    M66           ;POWDER FEED ON    
-    G4 F10        ;DELAY FOR POWDER STABILIZATION   
+    H1=R00*R13    ;Multiply power by factor
+    R15=R01       ;Set layer 0 base effective speed
   ENDIF
 
-   G91           ;SET RELATIVE COORDINATES    
-
-  ;SET FIRST LAP RADIUS
-  IF(R85==-1)       ;FROM OUTSIDE TO INSIDE
-    R86=R12         ;CURRENT WALL MEAN RADIUS (OUTER WALL MEAN RADIUS)
-  ELSE
-    R86=R12-R99*R11 ;SET CURRENT WALL MEAN RADIUS (INNER WALL MEAN RADIUS)
+  ;Apply N-th layer power and speed factors
+  IF(R04>0)
+    H1=R00*R62    ;Set power percentage with applied factor
+    R15=R01*R14   ;Set effective speed with applied factor
   ENDIF
 
-  R98=0
+  ;If pre-heating phase, override power and speed factors
+  IF(R92==1)
+    H1=R00*R16
+    R15=R01*R17
+  ENDIF
+
+  M78             ;Gas 1 ON
+  IF(R92==0)      ;Activate material only if not pre-heating cycle
+    M64           ;Carrier ON  	            
+    H2=R03        ;Set powder flow ON     
+    M62           ;Set powder mixer ON      
+    M66           ;Set powder feed ON
+    G4 F10        ;Delay for powder stabilization
+  ENDIF  
+
+  ;Laser on and path (reference bead)
+  G1 X=(R95) Y=(R94) F=(R02)          ;Move to reference bead start position (point R)
+  G91                                 ;Set relative coordinates
+
+  ;Deposit bead in linear path R-S
+  ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+  G1 X=(R93) F=R15
+  ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+
+  ;Laser on and path (slot walls)
+  G54                             ;Set workpiece offset (local coordinate system origin, LCSO)
+  G90                             ;Set absolute coordinates relative to LCSO
+  G1 X=(R89) Y=(R88) F=(R02)      ;Move to slot standard start position (point A)
+
+  IF(R85==1)                      ;If direction is from inside to outside
+    G91                           ;Set relative coordinates
+    G1 X=(R85*R11*(R99-1))        ;Move to inner wall starting position
+  ENDIF
+
+  R98=0         ;Set wall line counter
+  G91           ;Set relative coordinates  
   WHILE(R98<R99)
-    ;DEPOSIT BEAD IN LINEAR PATH A-B
+
+    ;Set first line slot radius
+    IF(R85==-1)       ;If direction is from outside to inside
+      R86=R12         ;Set current radius as outer wall mean radius
+    ELSE
+      R86=R12-R99*R11 ;Set current radius as inner wall mean radius
+    ENDIF
+
+    ;Deposit bead in linear path A-B
     ID=1 WHEN $AC_TIMER[1]>=0 DO M50
     G1 X=(0) Y=(+R79/2) F=R15
     ID=1 WHEN $AC_TIMER[1]>=0 DO M51
 
-    ;DEPOSIT BEAD IN CLOCK-WISE SEMI-CIRCULAR PATH B-C
+    ;Deposit bead in clok-wise semi-circular path B-C
     ID=1 WHEN $AC_TIMER[1]>=0 DO M50
     G2 X=(2*R86) Y=(0) I=(R86) J=(0) F=R15
     ID=1 WHEN $AC_TIMER[1]>=0 DO M51
 
-    ;DEPOSIT BEAD IN LINEAR PATH C-D
+    ;Deposit bead in linear path C-D
     ID=1 WHEN $AC_TIMER[1]>=0 DO M50
     G1 X=(0) Y=(-R79) F=R15
     ID=1 WHEN $AC_TIMER[1]>=0 DO M51
 
-    ;DEPOSIT BEAD IN CLOCK-WISE SEMI-CIRCULAR PATH D-E
+    ;Deposit bead in clok-wise semi-circular path D-E
     ID=1 WHEN $AC_TIMER[1]>=0 DO M50
     G2 X=(-2*R86) Y=(0) I=(-R86) J=(0) F=R15
     ID=1 WHEN $AC_TIMER[1]>=0 DO M51
     
-    ;DEPOSIT BEAD IN LINEAR PATH E-A
+    ;Deposit bead in linear path E-A
     ID=1 WHEN $AC_TIMER[1]>=0 DO M50
     G1 X=(0) Y=(+R79/2) F=R15
     ID=1 WHEN $AC_TIMER[1]>=0 DO M51
 
-    ;INCREMENT COUNTER
+    ;Increment wall line counter
     R98=R98+1
 
     IF(R98<R99)
-      ;MOVE TO NEXT WALL
-      G1 X=(-R85*R11)      ; MOVE TO OUTSIDE OR INSIDE DEPENDING ON THE DIRECTION FACTOR
-      R86=R86+(R85*R11);  ; CHANGE WALL MEAN READIUS
+      ;Move to next wall
+      G1 X=(-R85*R11)      ; Move to outside or inside depending on the direction factor
+      R86=R86+(R85*R11)    ; Change wall mean radius
     ENDIF
 
   ENDWHILE
-  
-  G1 X=(R85*R11*(R99-1))             ;RETURN TO FIRST WALL POSITION
-  G1 X=R81 Y=R82 Z=R06 F1000      ;MOVE IN DRAFT DIRECTION  
 
-  M65		            ; CARRIER OFF
-  M63		            ; POWDER MIXER OFF
-  M67		            ; POWDER FEED OFF
-  M79               ; GAS 1 OFF  
-  
-  M0                ; WAIT FOR USER INPUT
-  R04 = R04 + 1     ; ITERATE LAYER COUNTER
-  
+  R96 = R96 + 1                       ;Iterate pre-heating cycle   
+  IF(R96>R97)                         ;If not pre-heating cycle
+    R92=0                             ;Turn off pre-heating cycle
+  ENDIF
+
+  ;--Move to next layer starting position
+  IF(R92==1)                            ;If is pre-heating cycle      
+    G1 X=(R95) Y=(R94) F=(R02)          ;Move back to reference bead start position      
+  ELSE
+    G1 X=(R85*R11*(R99-1))              ;Return to first wall line position
+    G1 X=R81 Y=R82 Z=R06 F=(R02)        ;Move in draft direction 
+  ENDIF
+
+  M65		            ; Carrier OFF
+  M63		            ; Powder Mixer OFF
+  M67		            ; Powder feed OFF
+  M79               ; Gas 1 OFF      
+  M0                ; Wait for user input
+  R04 = R04 + 1     ; Iterate layer counter
+
 ENDWHILE
 
 ;End of Program--------------------------------------------
-M65		              ; CARRIER OFF
-M63		              ; POWDER MIXER OFF
-M67		              ; POWDER FEED OFF
-;M77                ; CROSSJET OFF
-M55		              ; HOME LASER RESSONATOR
-G4 F3               ; DELAY
-M79                 ; GAS 1 OFF
-M30		              ; PROGRAM END
+M65		              ; Carrier OFF
+M63		              ; Powder Mixer OFF
+M67		              ; Powder feed OFF
+;M77                ; Crossjet OFF
+M55		              ; Home LASER ressonator
+G4 F3               ; Delay
+M79                 ; Gas 1 OFF
+M30		              ; Program end
 
