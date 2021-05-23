@@ -185,9 +185,9 @@ WHILE(R04<R05)
     G1 X=R81 Y=R82 Z=R06 F=(R02)          ;Move in draft direction 
   ENDIF
 
-  M65		            ; Carrier OFF
-  M63		            ; Powder Mixer OFF
-  M67		            ; Powder feed OFF
+  M65               ; Carrier OFF
+  M63               ; Powder Mixer OFF
+  M67               ; Powder feed OFF
   M79               ; Gas 1 OFF      
   M0                ; Wait for user input
   R04 = R04 + 1     ; Iterate layer counter
@@ -195,12 +195,12 @@ WHILE(R04<R05)
 ENDWHILE
 
 ;End of Program--------------------------------------------
-M65		              ; Carrier OFF
-M63		              ; Powder Mixer OFF
-M67		              ; Powder feed OFF
-;M77                ; Crossjet OFF
-M55		              ; Home LASER ressonator
-G4 F3               ; Delay
-M79                 ; Gas 1 OFF
-M30		              ; Program end
+M65               ; Carrier OFF
+M63               ; Powder Mixer OFF
+M67               ; Powder feed OFF
+;M77              ; Crossjet OFF
+M55               ; Home LASER ressonator
+G4 F3             ; Delay
+M79               ; Gas 1 OFF
+M30               ; Program end
 
