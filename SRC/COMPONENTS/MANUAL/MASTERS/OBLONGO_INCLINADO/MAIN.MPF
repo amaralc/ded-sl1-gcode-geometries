@@ -54,6 +54,12 @@ R85=-1              ; Deposition sequence relative to curvature vector (from ins
 R89=R95             ; X Coordinate from start point of reference bead relative to reference coordinate system
 R88=((10+R84)/2)    ; Y Coordinate from start point of reference bead relative to reference coordinate system
 
+IF(R85==-1)         ;If direction is from outside to inside
+  R86=R12           ;Set current radius as outer wall mean radius
+ELSE
+  R86=R12-R99*R11   ;Set current radius as inner wall mean radius
+ENDIF
+
 ;PROCESS START-UP ------------------------------------------
 M56		              ; Set channel 1 as laser source
 G4F4		            ; Wait for 4 seconds to position the mirror
@@ -97,15 +103,15 @@ WHILE(R04<R05)
   ENDIF  
 
   ;Laser on and path (reference bead)
-  IF(R04==0)                            ;If first layer
-    G1 X=(R95) Y=(R94) F=(R02)          ;Move to reference bead start position (point R)
-    G91                                 ;Set relative coordinates
+  ;*IF(R04==0)                            ;If first layer
+  ;*  G1 X=(R95) Y=(R94) F=(R02)          ;Move to reference bead start position (point R)
+  ;*  G91                                 ;Set relative coordinates
 
-    ;Deposit bead in linear path R-S
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M50
-    G1 X=(R93) F=R15
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M51
-  ENDIF
+  ;*  ;Deposit bead in linear path R-S
+  ;*  ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+  ;*  G1 X=(R93) F=R15
+  ;*  ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+  ;*ENDIF
 
   ;Laser on and path (slot walls)
   G54                             ;Set workpiece offset (local coordinate system origin, LCSO)
@@ -117,16 +123,9 @@ WHILE(R04<R05)
     G1 X=(R85*R11*(R99-1))        ;Move to inner wall starting position
   ENDIF
 
+  G91           ;Set relative coordinates  
   R98=0         ;Set wall line counter
-  WHILE(R98<R99)
-    G91               ;Set relative coordinates  
-
-    ;Set first line slot radius
-    IF(R85==-1)       ;If direction is from outside to inside
-      R86=R12         ;Set current radius as outer wall mean radius
-    ELSE
-      R86=R12-R99*R11 ;Set current radius as inner wall mean radius
-    ENDIF
+  WHILE(R98<R99)    
 
     ;Deposit bead in linear path A-B
     ID=1 WHEN $AC_TIMER[1]>=0 DO M50
