@@ -24,7 +24,7 @@ R17=1               ; Pre-heating speed factor
 R62=1               ; 1+N layer power factor
 R14=1               ; 1+N layer speed factor
 R96=0               ; Pre-heating cycles counter
-R97=2               ; Number of pre-heating cycles
+R97=1               ; Number of pre-heating cycles
 R92=1               ; Is pre-heating cycle (0 = false, 1 = true)
 
 ;--Bead geometry parameters
@@ -97,13 +97,15 @@ WHILE(R04<R05)
   ENDIF  
 
   ;Laser on and path (reference bead)
-  G1 X=(R95) Y=(R94) F=(R02)          ;Move to reference bead start position (point R)
-  G91                                 ;Set relative coordinates
+  IF(R04==0)                            ;If first layer
+    G1 X=(R95) Y=(R94) F=(R02)          ;Move to reference bead start position (point R)
+    G91                                 ;Set relative coordinates
 
-  ;Deposit bead in linear path R-S
-  ID=1 WHEN $AC_TIMER[1]>=0 DO M50
-  G1 X=(R93) F=R15
-  ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+    ;Deposit bead in linear path R-S
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+    G1 X=(R93) F=R15
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+  ENDIF
 
   ;Laser on and path (slot walls)
   G54                             ;Set workpiece offset (local coordinate system origin, LCSO)
@@ -116,8 +118,8 @@ WHILE(R04<R05)
   ENDIF
 
   R98=0         ;Set wall line counter
-  G91           ;Set relative coordinates  
   WHILE(R98<R99)
+    G91               ;Set relative coordinates  
 
     ;Set first line slot radius
     IF(R85==-1)       ;If direction is from outside to inside
@@ -156,6 +158,7 @@ WHILE(R04<R05)
 
     IF(R98<R99)
       ;Move to next wall
+      G91
       G1 X=(-R85*R11)      ; Move to outside or inside depending on the direction factor
       R86=R86+(R85*R11)    ; Change wall mean radius
     ENDIF
@@ -163,16 +166,19 @@ WHILE(R04<R05)
   ENDWHILE
 
   R96 = R96 + 1                       ;Iterate pre-heating cycle   
-  IF(R96>R97)                         ;If not pre-heating cycle
+  IF(R96>=R97)                        ;If not pre-heating cycle    
     R92=0                             ;Turn off pre-heating cycle
   ENDIF
 
   ;--Move to next layer starting position
-  IF(R92==1)                            ;If is pre-heating cycle      
-    G1 X=(R95) Y=(R94) F=(R02)          ;Move back to reference bead start position      
-  ELSE
-    G1 X=(R85*R11*(R99-1))              ;Return to first wall line position
-    G1 X=R81 Y=R82 Z=R06 F=(R02)        ;Move in draft direction 
+  IF(R92==1)                              ;If is pre-heating cycle
+    G54
+    G90      
+    G1 X=(R95) Y=(R94) F=(R02)            ;Move back to reference bead start position      
+  ELSE  
+    G91         
+    G1 X=(R85*R11*(R99-1))                ;Return to first wall line position
+    G1 X=R81 Y=R82 Z=R06 F=(R02)          ;Move in draft direction 
   ENDIF
 
   M65		            ; Carrier OFF
