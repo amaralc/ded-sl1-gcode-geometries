@@ -41,10 +41,10 @@ R93=40              ; Reference bead length
 ;--Part geometry parameters
 R83=20              ; Outer wall external radius [mm]
 R85=-1              ; Deposition sequence relative to curvature vector (from inside to outside: +1)
-R70=7.5             ; Draft angle in slot transversal direction (X) [deg]
+R70=10              ; Draft angle in slot transversal direction (X) [deg]
 ;--
 R87=30              ; Nominal part height [mm]
-R80=7.5             ; Draft angle in slot longitudinal direction (Y) [deg]
+R80=10              ; Draft angle in slot longitudinal direction (Y) [deg]
 R99=2               ; Total lines per wall [-]
 R84=60              ; Slot longitudinal maximum dimension (Y) [mm]
 R12=R83-(R09/2)     ; Outer wall mean radius [mm]
@@ -118,9 +118,9 @@ WHILE(R04<R05)
     G91                                 ;Set relative coordinates
 
     ;Deposit reference bead in linear path R-S
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M88
     G1 X=(R93) F=R15
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M89
 
     ;Move to slot standard starting position
     G54 G90                         ;Set absolute coordinates relative to LCSO
@@ -163,29 +163,29 @@ WHILE(R04<R05)
   WHILE(R98<R99)    
 
     ;Deposit bead in linear path A-B
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M88
     G1 X=(0) Y=(+R79/2) F=R15
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M89
 
     ;Deposit bead in clok-wise semi-circular path B-C
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M88
     G2 X=(2*R86) Y=(0) I=(R86) J=(0) F=R15
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M89
 
     ;Deposit bead in linear path C-D
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M88
     G1 X=(0) Y=(-R79) F=R15
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M89
 
     ;Deposit bead in clok-wise semi-circular path D-E
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M88
     G2 X=(-2*R86) Y=(0) I=(-R86) J=(0) F=R15
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M89
     
     ;Deposit bead in linear path E-A
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M50
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M88
     G1 X=(0) Y=(+R79/2) F=R15
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M89
 
     ;Increment wall line counter
     R98=R98+1
