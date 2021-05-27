@@ -17,8 +17,8 @@ R00=39              ; Laser power [%] - Relative to available power set by choic
 R01=300             ; Deposition speed process ON [mm/min]
 R02=1000            ; Deposition speed process OFF [mm/min]
 R03=3               ; Powder feed disc rotational speed [RPM] - RPM is linearly related to powder feed rate in g/min
-R16=1.25            ; Pre-heating power factor
-R17=1               ; Pre-heating speed factor
+R16=1               ; Pre-heating power factor
+R17=2               ; Pre-heating speed factor
 R13=1.25            ; First layer power factor
 R18=1               ; First layer speed factor
 R62=1               ; 1+N layer power factor
@@ -39,23 +39,24 @@ R94=3               ; Y Coordinate from start point of reference bead relative t
 R93=40              ; Reference bead length
 
 ;--Part geometry parameters
-R83=20              ; Outer wall external radius [mm]
-R85=-1              ; Deposition sequence relative to curvature vector (from inside to outside: +1)
-R70=10              ; Draft angle in slot transversal direction (X) [deg]
-;--
-R87=30              ; Nominal part height [mm]
-R80=10              ; Draft angle in slot longitudinal direction (Y) [deg]
-R99=2               ; Total lines per wall [-]
-R84=60              ; Slot longitudinal maximum dimension (Y) [mm]
-R12=R83-(R09/2)     ; Outer wall mean radius [mm]
-R81=R06*TAN(R70)    ; Delta X between layers [mm]
-R82=R06*TAN(R80)    ; Delta Y between layers [mm]
-R79=R84-2*R83       ; Slot center distance [mm]
-R89=R95             ; X Coordinate from start point of reference bead relative to reference coordinate system
-R88=((10+R84)/2)    ; Y Coordinate from start point of reference bead relative to reference coordinate system
-R90=(R87/R06)       ; Nominal number of layers
-;--
-R05=(R92*R97) + R90 + R60  ; Total number of cycles [-]
+;---DOE Factors
+R80=5                       ; Draft angle in slot longitudinal direction (Y) [deg]
+R83=10                      ; Outer wall external radius [mm]
+R85=-1                      ; Deposition sequence relative to curvature vector (from inside to outside: +1)
+
+;---
+R99=2                       ; Total lines per wall [-]
+R87=30                      ; Nominal part height [mm]
+R70=0                       ; Draft angle in slot transversal direction (X) [deg]
+R84=60                      ; Slot longitudinal maximum dimension (Y) [mm]
+R12=R83-(R09/2)             ; Outer wall mean radius [mm]
+R81=R06*TAN(R70)            ; Delta X between layers [mm]
+R82=R06*TAN(R80)            ; Delta Y between layers [mm]
+R79=R84-2*R83               ; Slot center distance [mm]
+R89=R95                     ; X Coordinate from start point of reference bead relative to reference coordinate system
+R88=((10+R84)/2)            ; Y Coordinate from start point of reference bead relative to reference coordinate system
+R90=(R87/R06)               ; Nominal number of layers
+R05=(R92*R97) + R90 + R60   ; Total number of cycles [-]
 
 ;PROCESS START-UP ------------------------------------------
 M56		              ; Set channel 1 as laser source
