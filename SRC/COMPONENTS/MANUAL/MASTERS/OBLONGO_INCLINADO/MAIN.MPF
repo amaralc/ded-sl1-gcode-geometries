@@ -79,12 +79,6 @@ R71=0               ; Current nominal height
 
 ;While current nominal height < nominal part height
 WHILE(R71<=R87)
-  
-  ;Cancel pre-heating cycle
-  IF(R96>=R97)                        ;If not pre-heating cycle    
-    R92=0                             ;Turn off pre-heating cycle
-    R91 = R91 + R01                   ;Iterate layer counter
-  ENDIF
 
   ;Apply first layer power and speed factors
   IF(R04==0)
@@ -198,12 +192,17 @@ WHILE(R71<=R87)
       R86=R86+(R85*R11)    ; Change wall mean radius
     ENDIF
 
-  ENDWHILE    
-  
-  R96 = R96 + 1                       ;Iterate pre-heating cycle 
+  ENDWHILE
+
+   R96 = R96 + 1                      ;Iterate pre-heating cycle
+  ;Cancel pre-heating cycle
+  IF(R96>=R97)                        ;If not pre-heating cycle    
+    R92=0                             ;Turn off pre-heating cycle
+    R91 = R91 + R01                   ;Iterate layer counter
+  ENDIF    
 
   ;--Move to next cycle starting position
-  IF(R92==1)                              ;If is pre-heating cycle
+  IF(R92==1)                              ;If next cycle is pre-heating cycle
     G54 G90                               ;Set absolute coordinates relative to LCSO  
     G1 X=(R95) Y=(R94) F=(R02)            ;Move back to reference bead start position
     G91                                   ;Set relative coordinatesG91      
@@ -218,10 +217,7 @@ WHILE(R71<=R87)
     G91                                   ;Set relative coordinates         
   ENDIF
 
-  ;If not pre-heating cycle
-  IF(R96>=R97)                        
-    R71 = R71 + R06                      ;Increase nominal height by bead height
-  ENDIF
+ 
 
   M65               ; Carrier OFF
   M63               ; Powder Mixer OFF
