@@ -38,6 +38,10 @@ R95=3               ; X Coordinate from start point of reference bead relative t
 R94=3               ; Y Coordinate from start point of reference bead relative to reference coordinate system
 R93=40              ; Reference bead length
 
+;--Substrate geometry parameters
+R72=50              ; Substrate length in X direction
+R73=80              ; Substrate length in Y direction
+
 ;--Part geometry parameters
 ;---DOE Factors
 R80=5                       ; Draft angle in slot longitudinal direction (Y) [deg]
@@ -53,8 +57,8 @@ R12=R83-(R09/2)             ; Outer wall mean radius [mm]
 R81=R06*TAN(R70)            ; Delta X between layers [mm]
 R82=R06*TAN(R80)            ; Delta Y between layers [mm]
 R79=R84-2*R83               ; Slot center distance [mm]
-R89=R95                     ; X Coordinate from start point of reference bead relative to reference coordinate system
-R88=((10+R84)/2)            ; Y Coordinate from start point of reference bead relative to reference coordinate system
+R89=(R72/2)-(R12)           ; X Coordinate from start point of part relative to reference coordinate system
+R88=(R73/2)                 ; Y Coordinate from start point of part relative to reference coordinate system
 R90=(R87/R06)               ; Nominal number of layers
 R05=(R92*R97) + R90 + R60   ; Total number of cycles [-]
 
@@ -75,15 +79,10 @@ G91                             ; Set relative coordinates
 R04=0               ; Cycles counter
 R96=0               ; Pre-heating cycles counter
 R91=0               ; Layer counter
+R71=0               ; Current nominal height
 
-;While layer counter < Number of Layers
-WHILE(R04<R05)
-  
-  ;Cancel pre-heating cycle
-  IF(R96>=R97)                        ;If not pre-heating cycle    
-    R92=0                             ;Turn off pre-heating cycle
-    R91 = R91 + 1                     ;Iterate layer counter
-  ENDIF
+;While current nominal height < nominal part height
+WHILE(R71<=R87)
 
   ;Apply first layer power and speed factors
   IF(R04==0)
@@ -113,7 +112,7 @@ WHILE(R04<R05)
   ENDIF  
 
   ;Laser on and path (reference bead)
-  IF(R91<2) OR (R92==1)                ;If is first cycle or is pre-heating phase
+  IF(R91<2) OR (R92==1)                 ;If is first cycle or is pre-heating phase
     G54 G90                             ;Set absolute coordinates relative to LCSO
     G1 X=(R95) Y=(R94) F=(R02)          ;Move to reference bead start position (point R)
     G91                                 ;Set relative coordinates
@@ -186,7 +185,7 @@ WHILE(R04<R05)
     ;Deposit bead in linear path E-A
     ID=1 WHEN $AC_TIMER[1]>=0 DO M88
     G1 X=(0) Y=(+R79/2) F=R15
-    ID=1 WHEN $AC_TIMER[1]>=0 DO M89
+    ID=1 WHEN $AC_TIMER[1]>=0 DO M89                
 
     ;Increment wall line counter
     R98=R98+1
@@ -196,32 +195,43 @@ WHILE(R04<R05)
       G1 X=(-R85*R11)      ; Move to outside or inside depending on the direction factor
       R86=R86+(R85*R11)    ; Change wall mean radius
     ENDIF
-
+    
   ENDWHILE
-  
-     
-  
-  R96 = R96 + 1                       ;Iterate pre-heating cycle
-  
+
+  ;If direction is from outside to inside, move to wall starting position
+  IF(R85==-1)                      
+    G91                           ;Set relative coordinates
+    G1 X=(R85*R11*(R99-1))        ;Move to inner wall starting position
+  ENDIF  
+
+   R96 = R96 + 1                      ;Iterate pre-heating cycle
+  ;Cancel pre-heating cycle
+  IF(R96>=R97)                        ;If not pre-heating cycle    
+    R92=0                             ;Turn off pre-heating cycle
+    R91 = R91 + R01                   ;Iterate layer counter
+  ENDIF    
 
   ;--Move to next cycle starting position
-  IF(R92==1)                              ;If is pre-heating cycle
+  IF(R92==1)                              ;If next cycle is pre-heating cycle
     G54 G90                               ;Set absolute coordinates relative to LCSO  
     G1 X=(R95) Y=(R94) F=(R02)            ;Move back to reference bead start position
     G91                                   ;Set relative coordinatesG91      
   ELSE
-    R91 = R91 + 1                         ;Iterate layer counter  
     G91                                   ;Set relative coordinates         
-    G1 X=(R85*R11*(R99-1))                ;Return to first wall line position
-    G1 X=R81 Y=R82 Z=R06 F=(R02)          ;Move in draft direction 
-  ENDIF
+    G1 X=R81 Y=R82 F=(R02)                ;Move in draft direction
+
+    R71 = R71 + R06                       ;Increase nominal height by bead height
+    G54 G90                               ;Set absolute coordinates relative to LCSO
+    G1 Z=R71                              ;Move to next height (necessary to adjust part height during process)  
+    G91                                   ;Set relative coordinates         
+  ENDIF 
 
   M65               ; Carrier OFF
   M63               ; Powder Mixer OFF
   M67               ; Powder feed OFF
   M79               ; Gas 1 OFF      
   M0                ; Wait for user input
-  R04 = R04 + 1     ; Iterate layer counter
+  R04 = R04 + 1     ; Iterate cycles counter 
 
 ENDWHILE
 
