@@ -41,6 +41,7 @@ R93=40              ; Reference bead length
 ;--Substrate geometry parameters
 R72=50              ; Substrate length in X direction
 R73=80              ; Substrate length in Y direction
+R74=100             ; Offset in X direction to allow measuring the walls
 
 ;--Part geometry parameters
 ;---DOE Factors
@@ -112,7 +113,7 @@ WHILE(R71<=R87)
   ENDIF  
 
   ;Laser on and path (reference bead)
-  IF(R91<2) OR (R92==1)                 ;If is first cycle or is pre-heating phase
+  IF(R71==0)                            ;If is first cycle or is pre-heating phase
     G54 G90                             ;Set absolute coordinates relative to LCSO
     G1 X=(R95) Y=(R94) F=(R02)          ;Move to reference bead start position (point R)
     G91                                 ;Set relative coordinates
@@ -204,12 +205,7 @@ WHILE(R71<=R87)
     G1 X=(R85*R11*(R99-1))        ;Move to inner wall starting position
   ENDIF  
 
-   R96 = R96 + 1                      ;Iterate pre-heating cycle
-  ;Cancel pre-heating cycle
-  IF(R96>=R97)                        ;If not pre-heating cycle    
-    R92=0                             ;Turn off pre-heating cycle
-    R91 = R91 + R01                   ;Iterate layer counter
-  ENDIF    
+  
 
   ;--Move to next cycle starting position
   IF(R92==1)                              ;If next cycle is pre-heating cycle
@@ -226,11 +222,27 @@ WHILE(R71<=R87)
     G91                                   ;Set relative coordinates         
   ENDIF 
 
+  R96 = R96 + 1                       ;Iterate pre-heating cycle
+  ;Cancel pre-heating cycle
+  IF(R96>=R97)                        ;If not pre-heating cycle    
+    R92=0                             ;Turn off pre-heating cycle
+    R91 = R91 + R01                   ;Iterate layer counter
+  ENDIF   
+
   M65               ; Carrier OFF
   M63               ; Powder Mixer OFF
   M67               ; Powder feed OFF
   M79               ; Gas 1 OFF      
-  M0                ; Wait for user input
+
+  IF(R92==0)
+    G91
+    G1 X=(R74)                          ;Move away from part to allow measuring the part hight
+    M0                                  ;Wait for user input
+    G1 X=(R74)                          ;Move back to starting position
+  ELSE
+    M0                                  ; Wait for user input
+  ENDIF
+
   R04 = R04 + 1     ; Iterate cycles counter 
 
 ENDWHILE
