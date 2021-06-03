@@ -113,7 +113,7 @@ WHILE(R71<=R87)
   ENDIF  
 
   ;Laser on and path (reference bead)
-  IF(R71==0)                            ;If is first cycle or is pre-heating phase
+  IF(R71==0)                            ;Part height is zero
     G54 G90                             ;Set absolute coordinates relative to LCSO
     G1 X=(R95) Y=(R94) F=(R02)          ;Move to reference bead start position (point R)
     G91                                 ;Set relative coordinates
@@ -122,6 +122,14 @@ WHILE(R71<=R87)
     ID=1 WHEN $AC_TIMER[1]>=0 DO M50
     G1 X=(R93) F=R15
     ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+
+    ; If is not pre-heating cycle
+    IF(R92==0)
+      G91
+      G1 X=(R74)                          ;Move away from part to allow measuring the part hight
+      M0                                  ;Wait for user input
+      G1 X=(-R74)                         ;Move back to starting position
+    ENDIF
 
     ;Move to slot standard starting position
     G54 G90                         ;Set absolute coordinates relative to LCSO
@@ -203,9 +211,26 @@ WHILE(R71<=R87)
   IF(R85==-1)                      
     G91                           ;Set relative coordinates
     G1 X=(R85*R11*(R99-1))        ;Move to inner wall starting position
-  ENDIF  
+  ENDIF 
 
-    
+  ;If not pre-heating cycle
+  IF(R92==0)
+    R71 = R71 + R06                       ;Increase nominal height by bead height
+    G54 G90                               ;Set absolute coordinates relative to LCSO
+    G1 Z=R71                              ;Move to next height (necessary to adjust part height during process)  
+    G91                                   ;Set relative coordinates
+  ENDIF 
+
+  ;If pre-heating cycle
+  IF(R92==1)
+    R96 = R96 + 1                      ;Iterate pre-heating cycle
+  ENDIF
+  
+  ;If pre-heating cycle exceeds total pre-heating cycles
+  IF(R96>=R97)                        
+    R92=0                             ;Turn off pre-heating cycle
+    R91 = R91 + R01                   ;Iterate layer counter
+  ENDIF    
 
   ;--Move to next cycle starting position
   IF(R92==1)                              ;If next cycle is pre-heating cycle
@@ -214,34 +239,13 @@ WHILE(R71<=R87)
     G91                                   ;Set relative coordinatesG91      
   ELSE
     G91                                   ;Set relative coordinates         
-    G1 X=R81 Y=R82 F=(R02)                ;Move in draft direction
-
-    R71 = R71 + R06                       ;Increase nominal height by bead height
-    G54 G90                               ;Set absolute coordinates relative to LCSO
-    G1 Z=R71                              ;Move to next height (necessary to adjust part height during process)  
-    G91                                   ;Set relative coordinates         
+    G1 X=R81 Y=R82 F=(R02)                ;Move in draft direction         
   ENDIF 
-
-  R96 = R96 + 1                       ;Iterate pre-heating cycle
-  ;Cancel pre-heating cycle
-  IF(R96>=R97)                        ;If not pre-heating cycle    
-    R92=0                             ;Turn off pre-heating cycle
-    R91 = R91 + R01                   ;Iterate layer counter
-  ENDIF
 
   M65               ; Carrier OFF
   M63               ; Powder Mixer OFF
   M67               ; Powder feed OFF
   M79               ; Gas 1 OFF      
-
-  IF(R92==0)
-    G91
-    G1 X=(R74)                          ;Move away from part to allow measuring the part hight
-    M0                                  ;Wait for user input
-    G1 X=(-R74)                          ;Move back to starting position
-  ELSE
-    M0                                  ; Wait for user input
-  ENDIF
 
   R04 = R04 + 1     ; Iterate cycles counter 
 
