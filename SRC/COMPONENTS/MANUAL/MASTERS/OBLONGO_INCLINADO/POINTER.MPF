@@ -126,9 +126,9 @@ WHILE(R71<=R87)
     ; If is not pre-heating cycle
     IF(R92==0)
       G91
-      G1 X=(R74)                          ;Move away from part to allow measuring the part hight
+      G1 X=(R74) F=(R02)                  ;Move away from part to allow measuring the part hight
       M0                                  ;Wait for user input
-      G1 X=(-R74)                         ;Move back to starting position
+      G1 X=(-R74) F=(R02)                 ;Move back to starting position
     ENDIF
 
     ;Move to slot standard starting position
@@ -136,12 +136,17 @@ WHILE(R71<=R87)
     G1 X=(R89) Y=(R88) F=(R02)      ;Move to slot standard start position (point A)
     G91                             ;Set relative coordinates
 
-    ;Pause to check reference bead height and width with caliper
+    ;Turn powder variables off
     M65               ; Carrier OFF
     M63               ; Powder Mixer OFF
-    M67               ; Powder feed OFF
-    M79               ; Gas 1 OFF      
-    M0                ; Wait for user input    
+    M67               ; Powder feed OFF    
+
+    ;If is not pre-heating cycle pause to check reference bead height and width with caliper
+    IF(R92==0)
+      M79               ; Gas 1 OFF
+      M0                ; Wait for user input
+    ENDIF      
+        
   ENDIF
 
   M78                         ;Gas 1 ON (protection)
@@ -245,7 +250,15 @@ WHILE(R71<=R87)
   M65               ; Carrier OFF
   M63               ; Powder Mixer OFF
   M67               ; Powder feed OFF
-  M79               ; Gas 1 OFF      
+  M79               ; Gas 1 OFF
+
+  ; If is not pre-heating cycle
+  IF(R92==0)
+    G91
+    G1 X=(R74) F=(R02)                  ;Move away from part to allow measuring the part hight
+    M0                                  ;Wait for user input
+    G1 X=(-R74) F=(R02)                 ;Move back to starting position
+  ENDIF      
 
   R04 = R04 + 1     ; Iterate cycles counter 
 
