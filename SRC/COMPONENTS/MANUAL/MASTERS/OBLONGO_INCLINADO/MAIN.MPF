@@ -103,17 +103,18 @@ WHILE(R71<=R87)
     R15=R01*R17
   ENDIF
 
-  M78             ;Gas 1 ON
-  IF(R92==0)      ;Activate material only if not pre-heating cycle
-    M64           ;Carrier ON  	            
-    H2=R03        ;Set powder flow ON     
-    M62           ;Set powder mixer ON      
-    M66           ;Set powder feed ON
-    G4 F10        ;Delay for powder stabilization
-  ENDIF  
-
   ;Laser on and path (reference bead)
   IF(R71==0)                            ;Part height is zero
+
+    M78             ;Gas 1 ON
+    IF(R92==0)      ;Activate material only if not pre-heating cycle
+      M64           ;Carrier ON  	            
+      H2=R03        ;Set powder flow ON     
+      M62           ;Set powder mixer ON      
+      M66           ;Set powder feed ON
+      G4 F10        ;Delay for powder stabilization
+    ENDIF  
+
     G54 G90                             ;Set absolute coordinates relative to LCSO
     G1 X=(R95) Y=(R94) F=(R02)          ;Move to reference bead start position (point R)
     G91                                 ;Set relative coordinates
@@ -122,6 +123,11 @@ WHILE(R71<=R87)
     ID=1 WHEN $AC_TIMER[1]>=0 DO M50
     G1 X=(R93) F=R15
     ID=1 WHEN $AC_TIMER[1]>=0 DO M51
+
+    ;Turn powder variables off
+    M65 ; Carrier OFF
+    M63 ; Powder Mixer OFF
+    M67 ; Powder feed OFF
 
     ; If is not pre-heating cycle
     IF(R92==0)
@@ -134,29 +140,8 @@ WHILE(R71<=R87)
     ;Move to slot standard starting position
     G54 G90                         ;Set absolute coordinates relative to LCSO
     G1 X=(R89) Y=(R88) F=(R02)      ;Move to slot standard start position (point A)
-    G91                             ;Set relative coordinates
-
-    ;Turn powder variables off
-    M65               ; Carrier OFF
-    M63               ; Powder Mixer OFF
-    M67               ; Powder feed OFF    
-
-    ;If is not pre-heating cycle pause to check reference bead height and width with caliper
-    IF(R92==0)
-      M79               ; Gas 1 OFF
-      M0                ; Wait for user input
-    ENDIF      
+    G91                             ;Set relative coordinates     
         
-  ENDIF
-
-  M78                         ;Gas 1 ON (protection)
-  ;Activate material only if is not pre-heating cycle
-  IF(R92==0)                  
-    M64                       ;Carrier ON  	            
-    H2=R03                    ;Set powder flow ON     
-    M62                       ;Set powder mixer ON      
-    M66                       ;Set powder feed ON
-    G4 F10                    ;Delay for powder stabilization
   ENDIF
 
   ;If direction is from inside to outside, move to inner wall starting position
@@ -172,9 +157,33 @@ WHILE(R71<=R87)
     R86=R12-R99*R11 ;Set current radius as inner wall mean radius
   ENDIF
 
+  M0 ;--Wait for part height calibration
+  G54 G90 ;--Set absolute coordinates relative to LCSO
+  G1 Z=R71 ;--Move to next height (necessary to adjust part height during process)  
+  G91 ;--Set relative coordinates    
+
+  ;Activate material only if is not pre-heating cycle
+  M78 ;--Gas 1 ON (protection)
+  IF(R92==0)
+
+    ;--Move away from beads
+    G91 ;--Relative position
+    G1 X=(R83) F=(R02) 
+
+    ;--Turn powder on
+    M64 ;Carrier ON  	            
+    H2=R03 ;Set powder flow ON     
+    M62 ;Set powder mixer ON      
+    M66 ;Set powder feed ON
+    G4 F10 ;Delay for powder stabilization
+
+    ;--Move back to starting position
+    G1 X=(-R83) F=(R02) 
+  ENDIF
+
   G91           ;Set relative coordinates  
   R98=0         ;Set wall line counter
-  WHILE(R98<R99)    
+  WHILE(R98<R99)       
 
     ;Deposit bead in linear path A-B
     ID=1 WHEN $AC_TIMER[1]>=0 DO M50
@@ -212,6 +221,11 @@ WHILE(R71<=R87)
     
   ENDWHILE
 
+  M65               ; Carrier OFF
+  M63               ; Powder Mixer OFF
+  M67               ; Powder feed OFF
+  M79               ; Gas 1 OFF
+
   ;If direction is from outside to inside, move to wall starting position
   IF(R85==-1)                      
     G91                           ;Set relative coordinates
@@ -221,9 +235,6 @@ WHILE(R71<=R87)
   ;If not pre-heating cycle
   IF(R92==0)
     R71 = R71 + R06                       ;Increase nominal height by bead height
-    G54 G90                               ;Set absolute coordinates relative to LCSO
-    G1 Z=R71                              ;Move to next height (necessary to adjust part height during process)  
-    G91                                   ;Set relative coordinates
   ENDIF 
 
   ;If pre-heating cycle
@@ -246,18 +257,12 @@ WHILE(R71<=R87)
     G91                                   ;Set relative coordinates         
     G1 X=R81 Y=R82 F=(R02)                ;Move in draft direction         
   ENDIF 
-
-  M65               ; Carrier OFF
-  M63               ; Powder Mixer OFF
-  M67               ; Powder feed OFF
-  M79               ; Gas 1 OFF
-
-  ; If is not pre-heating cycle
-  IF(R92==0)
-    G91
-    G1 X=(R74) F=(R02)                  ;Move away from part to allow measuring the part hight
-    M0                                  ;Wait for user input
-    G1 X=(-R74) F=(R02)                 ;Move back to starting position
+  
+  IF(R92==0) ;--If is not pre-heating cycle
+    G91 ;--Set relative coordinates
+    G1 X=(R74) F=(R02) ;--Move away from part to allow measuring the part hight
+    M0 ;--Wait for user input
+    G1 X=(-R74) F=(R02) ;--Move back to starting position
   ENDIF      
 
   R04 = R04 + 1     ; Iterate cycles counter 
