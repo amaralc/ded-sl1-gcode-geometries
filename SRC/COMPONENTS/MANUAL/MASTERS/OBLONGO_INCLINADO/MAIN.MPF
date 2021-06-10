@@ -168,7 +168,7 @@ WHILE(R71<=R87)
 
     ;--Move away from beads
     G91 ;--Relative position
-    G1 X=(R83) F=(R02) 
+    G1 X=(R74) F=(R02) 
 
     ;--Turn powder on
     M64 ;Carrier ON  	            
@@ -178,7 +178,7 @@ WHILE(R71<=R87)
     G4 F10 ;Delay for powder stabilization
 
     ;--Move back to starting position
-    G1 X=(-R83) F=(R02) 
+    G1 X=(-R74) F=(R02) 
   ENDIF
 
   G91           ;Set relative coordinates  
