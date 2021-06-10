@@ -28,8 +28,8 @@ R92=1               ; Is pre-heating cycle (0 = false, 1 = true)
 R60=30              ; Number of extra layers to be built after nominal part height is achieved
 
 ;--Bead geometry parameters
-R06=1.44            ; Single bead height [mm]
-R09=3.2             ; Single bead thickness [mm]
+R06=1.48            ; Single bead height [mm] --> Ref: [1]
+R09=2.05            ; Single bead thickness [mm] --> Ref: [1]
 R10=0.1             ; Bead overlap [%]
 R11=R09*(1-R10)     ; Effective bead thickness
 
@@ -279,3 +279,7 @@ G4 F3             ; Delay
 M79               ; Gas 1 OFF
 M30               ; Program end
 
+
+;References ----------------------------------------------
+
+;[1] Pereira, A. Clad database, Available at: --> Ref: https://docs.google.com/spreadsheets/d/18b3XlXAv4ZM-dnsd3fcsfYWZjW5e8K608njgl76qOIs/edit#gid=0
