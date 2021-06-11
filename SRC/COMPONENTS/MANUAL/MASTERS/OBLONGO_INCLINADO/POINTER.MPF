@@ -45,9 +45,9 @@ R74=100             ; Offset in X direction to allow measuring the walls
 
 ;--Part geometry parameters
 ;---DOE Factors
-R80=5                       ; Draft angle in slot longitudinal direction (Y) [deg]
+R80=10                      ; Draft angle in slot longitudinal direction (Y) [deg]
 R83=10                      ; Outer wall external radius [mm]
-R85=-1                      ; Deposition sequence relative to curvature vector (from inside to outside: +1)
+R85=1                       ; Deposition sequence relative to curvature vector (from inside to outside: +1)
 
 ;---
 R99=2                       ; Total lines per wall [-]
