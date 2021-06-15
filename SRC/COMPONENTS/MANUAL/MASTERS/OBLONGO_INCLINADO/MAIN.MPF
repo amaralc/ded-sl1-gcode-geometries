@@ -28,8 +28,8 @@ R92=1               ; Is pre-heating cycle (0 = false, 1 = true)
 R60=30              ; Number of extra layers to be built after nominal part height is achieved
 
 ;--Bead geometry parameters
-R06=1.48            ; Single bead height [mm] --> Ref: [1]
-R09=2.05            ; Single bead thickness [mm] --> Ref: [1]
+R06=1.90            ; Single bead height [mm] --> Ref: [1]
+R09=2.70            ; Single bead thickness [mm] --> Ref: [1]
 R10=0.1             ; Bead overlap [%]
 R11=R09*(1-R10)     ; Effective bead thickness
 
@@ -46,8 +46,8 @@ R74=100             ; Offset in X direction to allow measuring the walls
 ;--Part geometry parameters
 ;---DOE Factors
 R80=10                      ; Draft angle in slot longitudinal direction (Y) [deg]
-R83=10                      ; Outer wall external radius [mm]
-R85=1                       ; Deposition sequence relative to curvature vector (from inside to outside: +1)
+R83=20                      ; Outer wall external radius [mm]
+R85=-1                       ; Deposition sequence relative to curvature vector (from inside to outside: +1)
 
 ;---
 R99=2                       ; Total lines per wall [-]
@@ -283,3 +283,4 @@ M30               ; Program end
 ;References ----------------------------------------------
 
 ;[1] Pereira, A. Clad database, Available at: --> Ref: https://docs.google.com/spreadsheets/d/18b3XlXAv4ZM-dnsd3fcsfYWZjW5e8K608njgl76qOIs/edit#gid=0
+;[2] Amaral, C. Clad caliper measurements, Available at: --> Ref: https://docs.google.com/spreadsheets/d/1-wA5xswRSi3lvFUKzdLiWVpyeYflv3_QdY2c-kEsvJI/edit#gid=697769463
